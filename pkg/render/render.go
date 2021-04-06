@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/simonNtz/bookings/pkg/config"
-	"github.com/simonNtz/bookings/pkg/models"
+	"github.com/simonntz/bookings/pkg/config"
+	"github.com/simonntz/bookings/pkg/models"
 )
 
 // app is the config for the template package
