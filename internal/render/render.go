@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/simonntz/bookings/pkg/config"
-	"github.com/simonntz/bookings/pkg/models"
+	"github.com/justinas/nosurf"
+	"github.com/simonntz/bookings/internal/config"
+	"github.com/simonntz/bookings/internal/models"
 )
 
-// app is the config for the template package
+var functions = template.FuncMap{}
+
 var app *config.AppConfig
 
 // NewTemplates sets the config for the template package
@@ -20,14 +22,14 @@ func NewTemplates(a *config.AppConfig) {
 	app = a
 }
 
-var functions = template.FuncMap{}
-
-func AddDefaultData(td *models.TemplateData) *models.TemplateData {
+// AddDefaultData adds data for all templates
+func AddDefaultData(td *models.TemplateData, r *http.Request) *models.TemplateData {
+	td.CSRFToken = nosurf.Token(r)
 	return td
 }
 
-// RenderTemplate renders template using html/template
-func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData) {
+// RenderTemplate renders a template
+func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, td *models.TemplateData) {
 	var tc map[string]*template.Template
 
 	if app.UseCache {
@@ -39,12 +41,12 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData)
 
 	t, ok := tc[tmpl]
 	if !ok {
-		log.Fatalf("template %s not exists", tmpl)
+		log.Fatal("Could not get template from template cache")
 	}
 
 	buf := new(bytes.Buffer)
 
-	td = AddDefaultData(td)
+	td = AddDefaultData(td, r)
 
 	_ = t.Execute(buf, td)
 
@@ -52,6 +54,7 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData)
 	if err != nil {
 		fmt.Println("error writing template to browser", err)
 	}
+
 }
 
 // CreateTemplateCache creates a template cache as a map
@@ -65,7 +68,6 @@ func CreateTemplateCache() (map[string]*template.Template, error) {
 	}
 
 	for _, page := range pages {
-
 		name := filepath.Base(page)
 		ts, err := template.New(name).Funcs(functions).ParseFiles(page)
 		if err != nil {
