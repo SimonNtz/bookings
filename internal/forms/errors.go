@@ -7,7 +7,7 @@ func (e errors) Add(field, message string) {
 	e[field] = append(e[field], message)
 }
 
-// Get returns first error message for a field
+// Get returns first error messsage for a field
 func (e errors) Get(field string) string {
 	es := e[field]
 	if len(es) == 0 {
